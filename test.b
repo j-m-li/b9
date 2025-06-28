@@ -49,8 +49,8 @@
    ---
   RULES: get the most readable font with only 6 pixels in ternary context.
          1 blank column between glyphs, one blank row at the top of each glyph.
-         trit 0 and trit 2 can't be 0, there must be a leat one + trit
-         and one - trit, except for empty glyph (0). 
+         trit 0 and trit 2 can't have the value 0, there must be a
+         least one + trit and one - trit, except for empty glyph (0). 
   -- -11 d     -- 11 4
   *             *
    *           *
