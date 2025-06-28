@@ -1,6 +1,6 @@
 # b9
 
-The ternary machine.
+## The ternary machine.
 
 
 
@@ -10,16 +10,16 @@ The ternary machine.
 A, E, I, O, N, M, S, D
 
 ## Phonetic Assignments
-| Letter   | IPA    | Example sound    |
-|----------|--------|------------------|
-| A  1     | /a/    | 'a' in "father"  |
-| E  2     | /e/    | 'e' in "bed"     |
-| I  3     | /i/    | 'ee' in "see"    |
-| O  4     | /o/    | 'o' in "go"      |
-| N -4     | /n/    | 'n' in "no"      |
-| M -3     | /m/    | 'm' in "man"     |
-| S -2     | /s/    | 's' in "see"     |
-| D -1     | /d/    | 'd' in "dog"     |
+| Letter   | Glyph | IPA    | Example sound    |
+|----------|-------|--------|------------------|
+| A        |  1    | /a/    | 'a' in "father"  |
+| E        |  2    | /e/    | 'e' in "bed"     |
+| I        |  3    | /i/    | 'ee' in "see"    |
+| O        |  4    | /o/    | 'o' in "go"      |
+| N        | -4    | /n/    | 'n' in "no"      |
+| M        | -3    | /m/    | 'm' in "man"     |
+| S        | -2    | /s/    | 's' in "see"     |
+| D        | -1    | /d/    | 'd' in "dog"     |
 
 ## Phonotactics
 - Syllable structure: (C)V(C), where C = N, M, S, D and V = A, E, I, O
@@ -58,9 +58,9 @@ A, E, I, O, N, M, S, D
 - **MI I MAN.** — I am a person.
 - **DO SO DIS.** — You go here.
 - **DAS I IDA IN OM.** — It is there in the house.
-- **ME A DAS.** — I have it.
-- **ME NO SO.** — I do not go.
-- **ME NO SOI.** — I do not know.
+- **MI A DAS.** — I have it.
+- **MI NO SO.** — I do not go.
+- **MI NO SOI.** — I do not know.
 - **DA E NO.** — Yes and no.
 - **MAS I DAS?** — What is it?
 - **DAS I MI OM?** — It is my house.
