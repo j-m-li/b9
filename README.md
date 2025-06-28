@@ -2,9 +2,12 @@
 
 ## The ternary machine.
 
+Design of an machine code instruction set for 
+a 18 trits ternary microcontroller.
 
+***
 
-## Minimal Written Natural Language (8-letter Alphabet)
+## A  Minimal Written Natural Language designed for the microcontroller
 
 ## Alphabet
 A, E, I, O, N, M, S, D
