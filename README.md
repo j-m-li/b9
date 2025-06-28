@@ -66,5 +66,5 @@ A, E, I, O, N, M, S, D
 - **MI NO SOI.** — I do not know.
 - **DA E NO.** — Yes and no.
 - **MAS I DAS?** — What is it?
-- **DAS I MI OM?** — It is my house.
+- **DAS I MI OM.** — It is my house.
 
