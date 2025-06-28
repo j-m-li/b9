@@ -8,11 +8,34 @@ int argc;
 char **argv;
 FILE *in;
 FILE *out;
+int line = 1;
+int column = 1;
+int mode = 0;
 
+int ascii2trit(int c, int hig)
+{
+	int a = -10000;
+	int b = -10000;
+	switch (c) {
+	case '4': a = 1; b = 1; break;
+	case '3': a = 0; b = 1; break;
+	case '2': a = -1; b = 1; break;
+	case '1': a = 1; b = 0; break;
+	case '0': a = 0; b = 0; break;
+	case 'a': a = -1; b = 0; break;
+	case 'b': a = 1; b = -1; break;
+	case 'c': a = 0; b = -1; break;
+	case 'd': a = -1; b = -1; break;
+	}
+	if (hig) {
+		return b;
+	}
+	return a;
+}
 
 int int2tri(int x, char *buf)
 {
-	if (1) {
+	if (mode) {
 		/* to ascii */
 		buf[0] = ' ';
 		switch (x) {
@@ -25,6 +48,8 @@ int int2tri(int x, char *buf)
 		case -2: buf[0] = 'b'; break; /* b */
 		case -3: buf[0] = 'c'; break; /* c */
 		case -4: buf[0] = 'd'; break; /* d */
+		case '\n': buf[0] = '\n'; break;
+		case ' ': buf[0] = ' '; break;
 		default: printf("errorx/%d/\n", x);
 		}
 		return 1;
@@ -33,17 +58,19 @@ int int2tri(int x, char *buf)
 	/* to UTF-8 */
 	buf[0] = 0xE2;
 	buf[1] = 0xA0;
-	buf[2] = 0x80; /* space */
+	buf[2] = 0xBF;
 	switch (x) {
 	case 4:  buf[2] = 0x8E; break; /* 4 */
 	case 3:  buf[2] = 0x8C; break; /* 3 */
 	case 2:  buf[2] = 0x95; break; /* 2 */
 	case 1:  buf[2] = 0x9C; break; /* 1 */
-	case 0:  buf[2] = 0xBF; break; /* 0 */
+	case 0:  buf[2] = 0x80; break; /* 0 */
 	case -1: buf[2] = 0xA3; break; /* a */
 	case -2: buf[2] = 0xAA; break; /* b */
 	case -3: buf[2] = 0xA1; break; /* c */
 	case -4: buf[2] = 0xB1; break; /* d */
+	case '\n': buf[0] = '\n'; return 1;
+	default: buf[0] = '_'; return 1;
 	}
 	return 3;
 }
@@ -112,6 +139,8 @@ void int2txt(int x, char *buf, int *len)
 	}
 	/*printf(">v%d x%d\n", v, x); */
 	l += int2tri(x, buf + l);
+	l += int2tri(' ', buf + l);
+
 	*len = l;
 }
 
@@ -130,46 +159,198 @@ void quit(int ec)
 	exit(ec);
 }
 
+int setlabel(char *label, int len, int offset, int newoffset)
+{
+	int i;
+	if ( newoffset > offset) {
+		offset = newoffset;
+	}
+	for (i = 0; i < len; i++) {
+		fwrite(label + i, 1, 1, stdout);
+	}
+	fwrite(" ", 1, 1, stdout);
+	printf("%d", offset);
+	fwrite("\n", 1, 1, stdout);
+
+	return offset;
+}
+
 void loop()
 {
 	static char buf[512];
-	static int start = 0;
+	static int idx = 0;
 	static int end = 0;
-	static int opcode;
-	static int value;
+	static int function = 0;
+	static int value[18];
+	static int tryte[3];
 	static int state = 0;
+	static int address = 0;
+	static int trit = 0;
+	static int bit = 0;
+	static int vi = 18;
+	static int ti = 3;
+	static char obu[1];
+	static char spaces = 0;
+	static int labelmode = 0;
+	static int offset = 0;
+	static char label[80];
+	static int li = 0;
+	static int newoffset = -1;
 	int l;
+	int i;
+	int t;
 
-	if (start == end) {
+	if (idx == end) {
 		l = fread(buf, 1, 512, in);	
 		if (l < 1) {
 			state = 255;
 		} else {
-			end = end + l;
-			fwrite(buf, 1, l, out);	
+			end = l;
 		}
+		idx = 0;
 		return;
 	}	
-	printn(state);
+	/*printn(state);
 	fwrite("\n", 1, 1, stdout);	
+	*/
 	switch (state) {
-	case 0: 
-		state++;
+	case 0: /* read tryte */
+		if (buf[idx] == ' ') {
+			spaces++;
+			if (spaces > 1) {
+				if (li) {
+					offset = setlabel(label, 
+							li, offset,newoffset);
+					li = 0;
+					newoffset = -1;
+				}
+				spaces = 0;
+				state = 3;
+				labelmode &= ~1;
+				return;
+			} else if (li) {
+				newoffset = 0;
+			}
+		} else if (buf[idx] == '\n') {
+			column = 0;
+			spaces = 0;
+			labelmode &= ~1;
+			if (li) {
+				offset = setlabel(label, li, offset, newoffset);
+				newoffset = -1;
+				li = 0;
+			}
+		} else {
+			spaces = 0;
+			if (column == 1) {
+				labelmode |= 1;
+				li = 0;
+			}
+		}
+		if ((labelmode & 1) == 0) {
+			t = ascii2trit(buf[idx], trit);
+		} else {
+			t = -1000;
+			if (li < sizeof(label) && newoffset < 0) {
+				label[li] = buf[idx];
+				li++;
+			} else {
+				newoffset *= 3;
+				newoffset += ascii2trit(buf[idx], 1);
+				newoffset *= 3;
+				newoffset += ascii2trit(buf[idx], 0);
+			}
+		}
+		if (t >= -1 && t <= 1) {
+			ti--;
+			tryte[ti] = t;
+		       	if (trit == 0) {
+				trit = 1;
+			} else {
+				idx++;
+				column++;
+				trit = 0;
+			}	
+		} else {
+			idx++;
+			column++;
+			trit = 0;
+			if (ti == 3) {
+				switch (state) {
+				case 0:
+					break;
+				}
+				return;
+			}
+			while (ti > 0) {
+				tryte[ti-1] = tryte[ti];
+				ti--;
+			}
+		}	
+		
+		if (ti == 0) {
+			ti = 3;
+			switch (state) {
+			case 0:
+				state = 1;
+				break;
+			}
+		}
 		break;
-	case 1: 
-		state++;
+	case 1:  /* process tryte */
+		if ((labelmode & 1) == 1) {
+			state = 0;
+			return;
+		}
+		
+		for (i = 0; i < 3; i++) {
+			if (bit == 0) {
+				obu[0] = 0;
+			}
+			if (tryte[i] == -1) {
+				obu[0] |= 2 << bit;
+			} else if (tryte[1] == 1) {
+				obu[0] |= 1 << bit;
+
+			}
+			bit += 2;
+			if (bit == 8) {
+				bit = 0;
+				fwrite(obu, 1, 1, out);	
+			}
+		}
+		offset++;
+		state = 0;
 		break;
 	case 2: 
 		state++;
 		break;
-	case 3: 
-		state++;
+	case 3: /* comment */
+		printf("%c", buf[idx]);
+		if (buf[idx] == '\n') {
+			line++;
+			column = 0;
+			state = 0;
+		}
+		idx++;
+		column++;
 		break;
 	case 4: 
 		state++;
 		break;
 	case 5: 
 		state++;
+		break;
+	case 255:
+		if (bit > 0) {
+			while (bit != 8) {
+				obu[0] |= 3 << bit;
+				bit += 2;
+			}
+			fwrite(obu, 1, 1, out);	
+		}
+	
+		quit(0);
 		break;
 	default:	
 		state++;
@@ -192,6 +373,17 @@ void setup()
 	if (!out) {
 		exit(-3);
 	}
+	printn(-4);
+	printn(-3);
+	printn(-2);
+	printn(-1);
+	printn(0);
+	printn(1);
+	printn(2);
+	printn(3);
+	printn(4);
+	fwrite("\n", 1, 1, stdout);	
+	mode = 1;
 }
 
 int main(int argc_, char *argv_[])
